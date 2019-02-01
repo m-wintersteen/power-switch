@@ -20,26 +20,41 @@ reader = SimpleMFRC522.SimpleMFRC522()
 
 Pwr=2 
 Pwr_status = 0
+mode = False
 
-key = 't111' #Set this string to the current code for the appropriate training
+tKey = 't111' #Set this string to the current code for the appropriate training
+sKey = 't999'
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(Pwr,GPIO.OUT)
 GPIO.output(Pwr,Pwr_status)
 
 def relay():
+	print("relay")
 	global Pwr_status
 	Pwr_status = not Pwr_status
 	GPIO.output(Pwr,Pwr_status)
 
 try:
 	while True:
-		id,text = reader.read()
-		if  key in text:
-			print(id)
-			print(text)
+		if mode:
+			id,text = reader.read()
+			if not sKey in text:
+				text = text.strip()+","+tKey
+				reader.write(text)
 			relay()
-			time.sleep(2)
+			time.sleep(1)
+			mode = False
+		else:
+			id,text = reader.read()
+			if  tKey in text:
+				if sKey in text:
+					mode = True
+				relay()
+				time.sleep(2)
+		print(id)
+		print(text)
+		print(mode)
 		
 except KeyboardInterrupt:
 	GPIO.cleanup()
